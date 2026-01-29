@@ -1,0 +1,1 @@
+RESUME_COLLECTION = "user_resumes"
