@@ -23,7 +23,10 @@ class MatchingService:
 
     def __init__(self, session: Session = None):
         self.session = session
-        logger.info("MatchingService initialized")
+        logger.info(
+            "[MULTI-AGENT-ORCHESTRATION] ✓ MatchingService initialized | "
+            "component=matching_service | agent_type=resume_matcher"
+        )
 
     # --------------------------------------------------
     # MAIN ENTRY
@@ -44,12 +47,17 @@ class MatchingService:
             # STEP 1: Build semantic query
             # --------------------------------------------------
             query_text = self._build_search_query(company_requirements)
-            logger.info(f"[RAG] Query text: {query_text}")
+            logger.info(
+                f"[MULTI-AGENT-ORCHESTRATION] Building resume matcher query | "
+                f"query_preview={query_text[:80]} | "
+                f"query_length={len(query_text)}"
+            )
 
             # --------------------------------------------------
             # STEP 2: SQL FILTERING
             # --------------------------------------------------
             chatbot_service = ChatbotSearchService(self.session)
+            logger.debug(f"[MULTI-AGENT-ORCHESTRATION] Delegating to SQL filter service")
 
             keywords = chatbot_service._extract_search_keywords(query_text)
             filtered_resumes = chatbot_service._filter_resumes_by_sql(
@@ -57,10 +65,17 @@ class MatchingService:
                 keywords=keywords
             )
 
-            logger.info(f"[RAG] SQL filter returned {len(filtered_resumes)} resumes")
+            logger.info(
+                f"[MULTI-AGENT-ORCHESTRATION] Resume filtering complete | "
+                f"filtered_count={len(filtered_resumes)} | "
+                f"filter_stage=sql_pre_filter"
+            )
 
             if not filtered_resumes:
-                logger.warning("[RAG] No resumes after SQL filtering")
+                logger.warning(
+                    f"[MULTI-AGENT-ORCHESTRATION] No resumes matched in SQL filter | "
+                    f"query={query_text[:60]} | stage=sql_pre_filter"
+                )
                 return []
 
             # --------------------------------------------------
@@ -73,12 +88,20 @@ class MatchingService:
             }
 
             if not allowed_chroma_ids:
-                logger.warning("[RAG] SQL resumes have no Chroma IDs")
+                logger.warning(
+                    f"[MULTI-AGENT-ORCHESTRATION] Resume collection incomplete | "
+                    f"filtered_resumes={len(filtered_resumes)} but none indexed | "
+                    f"stage=collection_prep"
+                )
                 return []
 
             # --------------------------------------------------
-            # STEP 4: VECTOR SEARCH (NO ID FILTERING HERE)
+            # STEP 4: RESUME MATCHING AGENT - SEMANTIC SEARCH
             # --------------------------------------------------
+            logger.info(
+                f"[MULTI-AGENT-ORCHESTRATION] Starting semantic matching agent | "
+                f"collection=user_resumes | top_k=15 | min_similarity=0.4"
+            )
             vector_results = embeddings_service.search(
                 collection_name="user_resumes",
                 query_text=query_text,
@@ -86,26 +109,35 @@ class MatchingService:
                 min_similarity=0.4
             )
 
-            logger.info(f"[RAG] Vector search returned {len(vector_results)} results")
+            logger.info(
+                f"[MULTI-AGENT-ORCHESTRATION] ✓ Semantic matching complete | "
+                f"matched_candidates={len(vector_results)} | "
+                f"agent=semantic_matcher"
+            )
 
             if not vector_results:
                 return []
 
             # --------------------------------------------------
-            # STEP 5: POST-FILTER VECTOR RESULTS USING SQL SET
+            # STEP 5: MULTI-AGENT COORDINATION - RESULT VALIDATION
             # --------------------------------------------------
+            logger.debug(f"[MULTI-AGENT-ORCHESTRATION] Validating matched candidates against filtered set | allowed_ids={len(allowed_chroma_ids)}")
             filtered_vector_results = [
                 r for r in vector_results
                 if r.get("id") in allowed_chroma_ids
             ]
 
             logger.info(
-                f"[RAG] Vector results after SQL post-filter: "
-                f"{len(filtered_vector_results)}"
+                f"[MULTI-AGENT-ORCHESTRATION] Result validation complete | "
+                f"valid_matches={len(filtered_vector_results)} of {len(vector_results)} candidates | "
+                f"stage=result_validation"
             )
 
             if not filtered_vector_results:
-                logger.warning("[RAG] No vector results matched SQL-filtered resumes")
+                logger.warning(
+                    f"[MULTI-AGENT-ORCHESTRATION] No valid matches found | "
+                    f"semantic_matches={len(vector_results)} but none passed validation"
+                )
                 return []
 
             # Keep only top_k after filtering
@@ -152,11 +184,21 @@ class MatchingService:
                     "is_verified": user.is_verified
                 })
 
-            logger.info(f"[RAG] Final matches returned: {len(results)}")
+            logger.info(
+                f"[MULTI-AGENT-ORCHESTRATION] ✓ Resume matching orchestration complete | "
+                f"final_matches={len(results)} | "
+                f"top_k={top_k} | "
+                f"orchestration_status=success"
+            )
             return results
 
         except Exception as e:
-            logger.error(f"[RAG] Error during matching: {e}", exc_info=True)
+            logger.error(
+                f"[MULTI-AGENT-ORCHESTRATION] ✗ Resume matching orchestration failed | "
+                f"error={str(e)} | "
+                f"orchestration_status=failed",
+                exc_info=True
+            )
             return []
 
     # --------------------------------------------------

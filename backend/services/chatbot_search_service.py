@@ -218,7 +218,10 @@ class ChatbotSearchService:
         and returns TOP-2 matching profiles.
         """
         try:
-            logger.info(f"[VECTOR SEARCH] Searching profiles for query: {query}")
+            logger.info(
+                f"[USER-PROFILE-AGENT] Starting semantic search | "
+                f"query_preview={query[:80]} | top_k={top_k} | min_similarity={min_similarity}"
+            )
 
             # Always enforce TOP-2
             top_k = 2
@@ -230,7 +233,10 @@ class ChatbotSearchService:
                 min_similarity=min_similarity
             )
 
-            logger.info(f"[VECTOR SEARCH] Returned {len(vector_results)} results")
+            logger.info(
+                f"[USER-PROFILE-AGENT] ✓ Semantic search complete | "
+                f"results_found={len(vector_results)}"
+            )
 
             matches = []
             seen_user_ids = set()
@@ -276,18 +282,23 @@ class ChatbotSearchService:
 
                     matches.append(match_data)
 
-                    logger.info(
-                        f"[MATCH] #{len(matches)} {user.full_name} "
-                        f"(user_id={user_id}, similarity={similarity:.4f})"
+                    logger.debug(
+                        f"[USER-PROFILE-AGENT] Processing match | "
+                        f"rank={len(matches)} | user_id={user_id} | similarity={similarity:.4f}"
                     )
 
                     if len(matches) >= top_k:
                         break
 
                 except Exception as e:
-                    logger.warning(f"Error processing vector result: {e}")
+                    logger.debug(f"[USER-PROFILE-AGENT] Skipped invalid result: {e}")
                     continue
 
+            logger.info(
+                f"[USER-PROFILE-AGENT] ✓ Semantic search orchestration complete | "
+                f"valid_matches={len(matches)} | response_type={'TOP_2_MATCHES' if matches else 'NO_MATCHES'}"
+            )
+            
             return {
                 "status": "success",
                 "query": query,
@@ -302,7 +313,10 @@ class ChatbotSearchService:
             }
 
         except Exception as e:
-            logger.error(f"Vector search failed: {e}", exc_info=True)
+            logger.error(
+                f"[USER-PROFILE-AGENT] ✗ Semantic search failed | error={str(e)}",
+                exc_info=True
+            )
             return {
                 "status": "error",
                 "query": query,

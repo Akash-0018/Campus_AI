@@ -47,7 +47,11 @@ class RequirementsAgent:
     
     def __init__(self):
         """Initialize requirements agent"""
-        logger.info("RequirementsAgent initialized")
+        logger.info(
+            "[MULTI-AGENT-INIT] ✓ RequirementsAgent initialized | "
+            "agent_type=requirements_collection | "
+            f"conversation_phases_count={len(self.CONVERSATION_PHASES)}"
+        )
     
     def get_greeting(self, user: User) -> str:
         """Generate personalized greeting for user"""

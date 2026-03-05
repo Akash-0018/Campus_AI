@@ -42,17 +42,23 @@ class EmbeddingsService:
     def embed_text(self, text: str) -> List[float]:
         """Generate embedding for given text"""
         try:
-            logger.info(f"[EMBEDDING_CONVERSION_START] Converting text to embedding: {len(text)} characters")
-            logger.info(f"[EMBEDDING_CONVERSION_CONTENT]\n{text}")
+            logger.info(
+                f"[EMBEDDINGS-AGENT] Starting text-to-embedding conversion | "
+                f"text_length={len(text)} characters | "
+                f"model={EMBEDDING_MODEL}"
+            )
             
             embedding = self.embedding_model.encode(text, convert_to_tensor=False)
             embedding_list = embedding.tolist()
             
-            logger.info(f"[EMBEDDING_CONVERSION_SUCCESS] Embedding generated: dimension={len(embedding_list)}, model={EMBEDDING_MODEL}")
-            logger.debug(f"[EMBEDDING_CONVERSION_VECTOR] Sample values: {embedding_list[:5]}...")
+            logger.info(
+                f"[EMBEDDINGS-AGENT] ✓ Embedding generated successfully | "
+                f"dimension={len(embedding_list)} | "
+                f"model={EMBEDDING_MODEL}"
+            )
             return embedding_list
         except Exception as e:
-            logger.error(f"[EMBEDDING_CONVERSION_ERROR] Error embedding text: {e}", exc_info=True)
+            logger.error(f"[EMBEDDINGS-AGENT] ✗ Error embedding text: {e}", exc_info=True)
             raise
     
     def build_resume_query(self, query_history: List[str]) -> str:

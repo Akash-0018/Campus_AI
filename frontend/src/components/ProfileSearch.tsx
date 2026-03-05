@@ -65,7 +65,7 @@ export const ProfileSearch: React.FC<ProfileSearchProps> = ({
       setError(null);
       
       // Send initial "hi" message
-      const response = await fetch('/api/chat/message', {
+      const response = await fetch('/api/chat-adk/message', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ export const ProfileSearch: React.FC<ProfileSearchProps> = ({
       setMessages((prev) => [...prev, userMessage]);
 
       // Send to chat API
-      const response = await fetch('/api/chat/message', {
+      const response = await fetch('/api/chat-adk/message', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

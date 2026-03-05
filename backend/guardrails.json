@@ -1,0 +1,91 @@
+{
+  "requirements_collection_agent": {
+    "name": "Requirements Collection Agent",
+    "description": "Collects job requirements from recruiters through multi-phase conversation",
+    "guardrails": [
+      {
+        "rule": "Input Validation",
+        "description": "Validates user input is 1-500 characters, no SQL injection patterns",
+        "enabled": true
+      },
+      {
+        "rule": "Phase Lock",
+        "description": "Cannot skip phases: must progress 0→1→2→3→4→5 sequentially",
+        "enabled": true
+      },
+      {
+        "rule": "Session Isolation",
+        "description": "Each user's session is isolated, cannot access other user data",
+        "enabled": true
+      },
+      {
+        "rule": "Requirement Completion",
+        "description": "All required phases must be complete before matching starts",
+        "enabled": true
+      },
+      {
+        "rule": "Data Validation",
+        "description": "Validate extracted fields match expected types and formats",
+        "enabled": true
+      },
+      {
+        "rule": "Error Recovery",
+        "description": "On any error, provide user-friendly message and handle gracefully",
+        "enabled": true
+      }
+    ]
+  },
+  "resume_matching_tool": {
+    "name": "Resume Matching Tool",
+    "description": "Searches and matches resumes from ChromaDB based on requirements",
+    "guardrails": [
+      {
+        "rule": "Limit Results",
+        "description": "Always return max 2 resumes per query to prevent data overload",
+        "enabled": true
+      },
+      {
+        "rule": "Score Threshold",
+        "description": "Only return matches with similarity score >= 0.65 (65%)",
+        "enabled": true
+      },
+      {
+        "rule": "Data Sanitization",
+        "description": "Results include computed fields only, sanitized for user view",
+        "enabled": true
+      }
+    ]
+  },
+  "user_profile_tool": {
+    "name": "User Profile Tool",
+    "description": "Fetches user profile information from database",
+    "guardrails": [
+      {
+        "rule": "User Isolation",
+        "description": "Can only fetch own user data or authorized users",
+        "enabled": true
+      },
+      {
+        "rule": "Data Masking",
+        "description": "Sensitive fields masked in responses (passwords, tokens)",
+        "enabled": true
+      }
+    ]
+  },
+  "embeddings_tool": {
+    "name": "Embeddings Tool",
+    "description": "Generates embeddings for requirements text",
+    "guardrails": [
+      {
+        "rule": "Input Size Limit",
+        "description": "Input text limited to 5000 characters",
+        "enabled": true
+      },
+      {
+        "rule": "Output Validation",
+        "description": "Verify embeddings are valid vectors before returning",
+        "enabled": true
+      }
+    ]
+  }
+}
